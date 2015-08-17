@@ -1,6 +1,7 @@
 package com.example.koktoh.a_go_calc_for_android;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -58,9 +59,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private int bossWin = 0;
     private int win = 0;
 
-    // 計算結果入れ
-    private int result;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,8 +105,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         bossWinProgressBar.setMax(100);
         winProgressBar.setMax(100);
         allProgressBar.setMax(100);
+    }
 
+    @Override
+    protected void onStart(){
         checkPref();
+        super.onStart();
     }
 
     @Override
@@ -133,7 +135,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         e.commit();
 
         super.onPause();
-        finish();
+        // finish();
     }
 
     @Override
@@ -145,17 +147,39 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        switch(item.getItemId()){
+            case R.id.action_settings:
+                Intent i = new Intent(getApplicationContext(),SettingActivity.class);
+                i.putExtra("attack",attack);
+                i.putExtra("boss",boss);
+                i.putExtra("bossWin",bossWin);
+                i.putExtra("win",win);
+                startActivityForResult(i, 0);
+                break;
+            case R.id.action_reset:
+                attack = 0;
+                boss = 0;
+                bossWin = 0;
+                win = 0;
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+                calcProgress();
+                break;
         }
 
-        return super.onOptionsItemSelected(item);
+        return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if(requestCode == 0){
+            attack = data.getIntExtra("attack",attack);
+            boss = data.getIntExtra("boss",boss);
+            bossWin = data.getIntExtra("bossWin", bossWin);
+            win = data.getIntExtra("win", win);
+
+            calcProgress();
+        }
     }
 
     @Override
@@ -179,49 +203,57 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 ;
         }
 
-        result = (int) (((attack < attackF) ? attack : attackF / attackF * 25) + ((boss < bossF) ? boss : bossF / bossF * 25) + ((bossWin < bossWinF) ? bossWin : bossWinF / bossWinF * 25) + ((win < winF) ? win : winF / winF * 25));
-        allProgressBar.setProgress(result);
-        allTextView.setText(String.valueOf(result) + "%");
     }
 
     private void attackButtonClicked() {
         attack++;
 
-        result = (int) ((attack < attackF) ? attack : attackF / attackF * 100);
-
-        attackNumTextView.setText(String.valueOf(attack));
-        attackProgressBar.setProgress(result);
-        attackTextView.setText(String.valueOf(result) + "%");
+        calcProgress();
     }
 
     private void bossButtonClicked() {
         boss++;
 
-        result = (int) ((boss < bossF) ? boss : bossF / bossF * 100);
-
-        bossNumTextView.setText(String.valueOf(boss));
-        bossProgressBar.setProgress(result);
-        bossTextView.setText(String.valueOf(result) + "%");
+       calcProgress();
     }
 
     private void bossWinButtonClicked() {
         bossWin++;
 
-        result = (int) ((bossWin < bossWinF) ? bossWin : bossWinF / bossWinF * 100);
-
-        bossWinNumTextView.setText(String.valueOf(bossWin));
-        bossWinProgressBar.setProgress(result);
-        bossWinTextView.setText(String.valueOf(result) + "%");
+        calcProgress();
     }
 
     private void winButtonClicked() {
         win++;
 
-        result = (int) ((win < winF) ? win : winF / winF * 100);
+        calcProgress();
+    }
 
+    private void calcProgress()
+    {
+        int attackResult = (int) (((attack < attackF) ? attack : attackF) / attackF * 100);
+        attackNumTextView.setText(String.valueOf(attack));
+        attackProgressBar.setProgress(attackResult);
+        attackTextView.setText(String.valueOf(attackResult) + "%");
+
+        int bossResult = (int) (((boss < bossF) ? boss : bossF) / bossF * 100);
+        bossNumTextView.setText(String.valueOf(boss));
+        bossProgressBar.setProgress(bossResult);
+        bossTextView.setText(String.valueOf(bossResult) + "%");
+
+        int bossWinResult = (int) (((bossWin < bossWinF) ? bossWin : bossWinF) / bossWinF * 100);
+        bossWinNumTextView.setText(String.valueOf(bossWin));
+        bossWinProgressBar.setProgress(bossWinResult);
+        bossWinTextView.setText(String.valueOf(bossWinResult) + "%");
+
+        int winResult = (int) (((win < winF) ? win : winF) / winF * 100);
         winNumTextView.setText(String.valueOf(win));
-        winProgressBar.setProgress(result);
-        winTextView.setText(String.valueOf(result) + "%");
+        winProgressBar.setProgress(winResult);
+        winTextView.setText(String.valueOf(winResult) + "%");
+
+        int result = (int) ((((attack < attackF) ? attack : attackF) / attackF * 25) + (((boss < bossF) ? boss : bossF) / bossF * 25) + (((bossWin < bossWinF) ? bossWin : bossWinF) / bossWinF * 25) + (((win < winF) ? win : winF) / winF * 25));
+        allProgressBar.setProgress(result);
+        allTextView.setText(String.valueOf(result) + "%");
     }
 
     private void checkPref() {
